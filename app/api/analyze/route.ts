@@ -1,4 +1,6 @@
 import { createCanvas } from "@napi-rs/canvas";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { guardRequest } from "@/lib/auth";
 import { explainDocument, runOcr } from "@/lib/google-cloud";
 import type { Language } from "@/lib/prompt";
@@ -11,6 +13,7 @@ const MAX_PDF_PAGES = 8;
 
 async function renderPdf(buffer: Uint8Array) {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(join(process.cwd(), "vendor", "pdf.worker.mjs")).href;
   const pdf = await pdfjs.getDocument({ data: buffer, useSystemFonts: true }).promise;
   if (pdf.numPages > MAX_PDF_PAGES) {
     await pdf.destroy();
@@ -62,3 +65,4 @@ export async function POST(request: Request) {
     return Response.json({ error: message }, { status: 500, headers: { "Cache-Control": "no-store" } });
   }
 }
+
