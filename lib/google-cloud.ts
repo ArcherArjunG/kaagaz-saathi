@@ -1,7 +1,7 @@
 import { getGoogleAccessToken, requireProject } from "@/lib/auth";
 import { analysisInstruction, LANGUAGE_NAMES, normalizeAnalysis, redactKycText, RESULT_SCHEMA, type Language } from "@/lib/prompt";
 
-type OcrImage = { content: string; mimeType: string };
+type OcrImage = { content: string; mimeType: string; pageNumber: number };
 
 async function googleFetch(url: string, body: unknown) {
   const token = await getGoogleAccessToken();
@@ -19,7 +19,7 @@ async function googleFetch(url: string, body: unknown) {
   return payload;
 }
 
-export async function runOcr(images: OcrImage[]): Promise<string> {
+export async function runOcr(images: OcrImage[]): Promise<Array<{ pageNumber: number; text: string }>> {
   const payload = await googleFetch("https://vision.googleapis.com/v1/images:annotate", {
     requests: images.map((image) => ({
       image: { content: image.content },
@@ -30,10 +30,13 @@ export async function runOcr(images: OcrImage[]): Promise<string> {
   const responses = payload.responses || [];
   const errors = responses.map((item) => item.error?.message).filter(Boolean);
   if (errors.length) throw new Error(errors.join("; "));
-  const pages = responses.map((item, index) => `--- Page ${index + 1} ---\n${item.fullTextAnnotation?.text || ""}`);
-  const text = pages.join("\n\n").trim();
-  if (!text) throw new Error("No readable text was found. Try a clearer photo with the page flat and well lit.");
-  return text;
+  const pages = responses
+    .map((item, index) => ({
+      pageNumber: images[index]?.pageNumber ?? index + 1,
+      text: item.fullTextAnnotation?.text?.trim() || "",
+    }))
+    .filter((page) => page.text.length > 0);
+  return pages;
 }
 
 function vertexEndpoint(project: string) {
@@ -89,3 +92,4 @@ export async function synthesizeSpeech(text: string, language: Language) {
   if (!payload.audioContent) throw new Error("Text-to-Speech did not return audio.");
   return payload.audioContent;
 }
+
