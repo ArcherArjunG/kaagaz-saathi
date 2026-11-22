@@ -1,0 +1,27 @@
+{
+  "name": "kaagazsathi-web",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.80",
+    "google-auth-library": "^10.2.0",
+    "next": "^15.5.6",
+    "pdfjs-dist": "^5.4.394",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.7",
+    "typescript": "^5.8.3"
+  }
+}
